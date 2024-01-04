@@ -73,7 +73,7 @@ var
   generatedTypes {.compileTime, used.}: HashSet[TypedNimNode]
   codeFormatter* {.compileTime, used.} = ""
 
-macro makeHeader*(location: static string): untyped =
+proc makeHeader*(location: static string) {.compileTime.} =
   when defined(genHeader):
     var file = ""
     for header in headers:
@@ -607,4 +607,4 @@ when isMainModule:
 
   var myGlobal {.exporterVar, expose.} = MyOtherType(rng: 3, otherRange: 3)
   var inheritance {.exporterVar, expose.} = Child(x: 300)
-  makeHeader("tests/gend.h")
+  static: makeHeader("tests/gend.h")

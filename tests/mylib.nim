@@ -57,4 +57,4 @@ let
   do_stuff_float {.exporterVar, expose.} = doStuff[float]
   do_stuff_seq_float {.exporterVar, expose.} = doStuff[seq[float]]
 
-makeHeader("tests/mylib.h")
+static: makeHeader("tests/mylib.h")
