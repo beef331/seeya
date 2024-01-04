@@ -1,3 +1,4 @@
+--mm:orc
 task genHeaders, "generates the headers":
   selfExec("c -d:genHeader -f --verbosity:0 -c seeya.nim")
   selfExec("c -d:genHeader -f --verbosity:0 -c tests/mylib.nim")
