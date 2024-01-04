@@ -72,7 +72,7 @@ var
   variables {.compileTime, used.} = ""
   generatedTypes {.compileTime, used.}: HashSet[TypedNimNode]
 
-macro makeHeader*(location: static string, formatter: static string = "") =
+macro makeHeader*(location: static string) =
   when defined(genHeader):
     var file = ""
     for header in headers:
@@ -85,10 +85,6 @@ macro makeHeader*(location: static string, formatter: static string = "") =
     file.add procDefs
 
     writeFile(location, file)
-    if formatter.len > 0:
-      let resp = staticExec(formatter.replace("$file", location))
-      if resp.len > 0:
-        error(resp)
   else:
     discard
 
@@ -606,4 +602,6 @@ when isMainModule:
 
   var myGlobal {.exporterVar, expose.} = MyOtherType(rng: 3, otherRange: 3)
   var inheritance {.exporterVar, expose.} = Child(x: 300)
-  makeHeader("tests/gend.h", "clang-format -i $file")
+  makeHeader("tests/gend.h")
+  when defined(genHeader):
+    static: discard staticExec("clang-format -i tests/gend.h")

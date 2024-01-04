@@ -57,4 +57,6 @@ let
   do_stuff_float {.exporterVar, expose.} = doStuff[float]
   do_stuff_seq_float {.exporterVar, expose.} = doStuff[seq[float]]
 
-static: makeHeader("tests/mylib.h", "clang-format -i $file")
+makeHeader("tests/mylib.h")
+when defined(genHeader):
+  static: discard staticExec("clang-format -i tests/gend.h")
