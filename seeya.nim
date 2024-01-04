@@ -73,23 +73,24 @@ var
   generatedTypes {.compileTime, used.}: HashSet[TypedNimNode]
   codeFormatter* {.compileTime, used.} = ""
 
-proc makeHeader*(location: static string) {.compileTime.} =
+template makeHeader*(location: static string) =
   when defined(genHeader):
-    var file = ""
-    for header in headers:
-      file.add fmt "#include {header}\n"
-    file.add "\n"
+    static:
+      var file = ""
+      for header {.inject.} in headers:
+        file.add fmt "#include {header}\n"
+      file.add "\n"
 
-    file.add typeDefs
-    file.add variables
-    file.add "\n"
-    file.add procDefs
+      file.add typeDefs
+      file.add variables
+      file.add "\n"
+      file.add procDefs
 
-    writeFile(location, file)
-    if codeFormatter.len > 0:
-      let resp = staticExec(codeFormatter.replace("$file", location))
-      if resp.len > 0:
-        error(resp)
+      writeFile(location, file)
+      if codeFormatter.len > 0:
+        let resp = staticExec(codeFormatter.replace("$file", location))
+        if resp.len > 0:
+          error(resp)
   else:
     discard
 
@@ -607,4 +608,4 @@ when isMainModule:
 
   var myGlobal {.exporterVar, expose.} = MyOtherType(rng: 3, otherRange: 3)
   var inheritance {.exporterVar, expose.} = Child(x: 300)
-  static: makeHeader("tests/gend.h")
+  makeHeader("tests/gend.h")
