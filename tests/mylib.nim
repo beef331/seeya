@@ -7,7 +7,7 @@ const nameStr = "mylib_$1"
 
 static:
   setFormatter(nameStr)
-  codeFormatter = "clang-format -i $file"
+
 {.pragma: exporter, cdecl, dynlib, exportc: nameStr.}
 {.pragma: exporterVar, dynlib, exportc: nameStr.}
 
@@ -57,4 +57,4 @@ let
   do_stuff_float {.exporterVar, expose.} = doStuff[float]
   do_stuff_seq_float {.exporterVar, expose.} = doStuff[seq[float]]
 
-static: makeHeader("tests/mylib.h")
+static: makeHeader("tests/mylib.h", "clang-format -i $file")

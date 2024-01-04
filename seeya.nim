@@ -71,26 +71,24 @@ var
   procDefs {.compileTime, used.} = ""
   variables {.compileTime, used.} = ""
   generatedTypes {.compileTime, used.}: HashSet[TypedNimNode]
-  codeFormatter* {.compileTime, used.} = ""
 
-template makeHeader*(location: static string) =
+macro makeHeader*(location: static string, formatter: static string = "") =
   when defined(genHeader):
-    static:
-      var file = ""
-      for header {.inject.} in headers:
-        file.add fmt "#include {header}\n"
-      file.add "\n"
+    var file = ""
+    for header in headers:
+      file.add fmt "#include {header}\n"
+    file.add "\n"
 
-      file.add typeDefs
-      file.add variables
-      file.add "\n"
-      file.add procDefs
+    file.add typeDefs
+    file.add variables
+    file.add "\n"
+    file.add procDefs
 
-      writeFile(location, file)
-      if codeFormatter.len > 0:
-        let resp = staticExec(codeFormatter.replace("$file", location))
-        if resp.len > 0:
-          error(resp)
+    writeFile(location, file)
+    if formatter.len > 0:
+      let resp = staticExec(formatter.replace("$file", location))
+      if resp.len > 0:
+        error(resp)
   else:
     discard
 
@@ -541,7 +539,7 @@ when isMainModule:
 
   static:
     setFormatter(nameStr)
-    codeFormatter = "clang-format -i $file"
+
   {.pragma: exporter, cdecl, dynlib, exportc: nameStr.}
   {.pragma: exporterVar, dynlib, exportc: nameStr.}
 
@@ -608,4 +606,4 @@ when isMainModule:
 
   var myGlobal {.exporterVar, expose.} = MyOtherType(rng: 3, otherRange: 3)
   var inheritance {.exporterVar, expose.} = Child(x: 300)
-  makeHeader("tests/gend.h")
+  makeHeader("tests/gend.h", "clang-format -i $file")
