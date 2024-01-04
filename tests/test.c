@@ -1,5 +1,6 @@
 #include "mylib.h"
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -27,13 +28,21 @@ int main()
 
     for (int i = 0; i < 4; i++)
         assert(vals[i] == floats.data->data[i]);
-
-    assert(memcmp(floats.data->data, &vals, sizeof(vals)) == 0);
+    assert(floats.len == 4);
+    assert(memcmp(floats.data->data, &vals, floats.len * sizeof(double)) == 0);
     struct mylib_seq_float floats2 = mylib_do_stuff_seq_float(floats);
     assert(mylib_float_seq_cmp(floats, floats2));
 
     mylib_free_float_seq(floats);
     mylib_free_float_seq(floats2);
 
+    intptr_t ints[] = { 1,
+        2,
+        3,
+        4,
+        5,
+        6 };
+    struct mylib_opaque_seq_int int_seq = mylib_make_opaque_seq_int(ints, 6);
+    assert(memcmp(mylib_opaque_seq_int_data(int_seq), vals, int_seq.len * sizeof(intptr_t)));
     return 0;
 }

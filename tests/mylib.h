@@ -24,6 +24,7 @@ struct mylib_seq_float{
     struct mylib_seq_data_float *data;
 };
 
+struct mylib_opaque_seq_int{intptr_t len; void* data;};
 extern intptr_t (*mylib_do_stuff_int)(intptr_t );
 extern double (*mylib_do_stuff_float)(double );
 extern struct mylib_seq_float (*mylib_do_stuff_seq_float)(struct mylib_seq_float );
@@ -51,3 +52,5 @@ void mylib_free_my_obj(struct mylib_MyObj *obj );
 void mylib_free_float_seq(struct mylib_seq_float s );
 struct mylib_seq_float   mylib_new_float_seq(double *data_data, intptr_t data_len );
 bool   mylib_float_seq_cmp(struct mylib_seq_float a , struct mylib_seq_float b );
+struct mylib_opaque_seq_int   mylib_make_opaque_seq_int(intptr_t *data_data, intptr_t data_len );
+intptr_t *  mylib_opaque_seq_int_data(struct mylib_opaque_seq_int sq );

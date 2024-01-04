@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.4"
+version       = "0.1.5"
 author        = "Jason"
 description   = "Generates headers from nim code"
 license       = "MIT"

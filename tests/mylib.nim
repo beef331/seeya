@@ -52,6 +52,12 @@ proc doStuff[T](obj: T): T {.cdecl.} =
   echo obj
   obj
 
+proc make_opaque_seq_int(data: openArray[int]): OpaqueSeq[int] {.exporter, expose.} =
+  OpaqueSeq @data
+
+proc opaque_seq_int_data(sq: OpaqueSeq[int]): ptr int {.exporter, expose.} =
+  seq[int](sq)[0].addr
+
 let
   do_stuff_int {.exporterVar, expose.} = doStuff[int]
   do_stuff_float {.exporterVar, expose.} = doStuff[float]

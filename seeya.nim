@@ -16,6 +16,43 @@ when not defined(gcOrc) or defined(gcArc):
 ## `procArg` indicates whether it is a proc argument, this is important for things like Nim's implicit pass by reference.
 ## Finally when done you can do `makeHeader("/path/to/header.h")` this will concatenate and make the final header.
 
+
+runnableExamples:
+  when defined(genHeader):
+    {.warning[UnsafeDefault]: off.}
+
+  const nameStr = "your_lib_prefix_$1"
+
+  static:
+    setFormatter(nameStr)
+
+  {.pragma: exporter, cdecl, dynlib, exportc: nameStr.}
+  {.pragma: exporterVar, dynlib, exportc: nameStr.}
+
+  proc print_int_arr(oa: openArray[int]){.exporter, expose.} = echo oa
+  proc add_int(a, b: int): int {.exporter, expose.} = a + b
+
+  var my_int {.exporterVar, expose.} = 100
+
+  type MyEnum = enum
+    a, b, c
+
+  proc toTypeDefs(_: typedesc[MyEnum]): string =
+    headers.incl "<stdio.h>" # Pretend it requires a specific header
+    seeya.toTypeDefs(MyEnum) # call the original enum generator
+
+  proc toCType(_: typedesc[MyEnum], name: string, isProcArg: bool): string =
+    # We're also pretending we need to make our own C type proc
+    result = "enum "
+    result.add ($MyEnum).formatName()
+    result.add " "
+    result.add name
+
+  makeHeader("mylib.h")
+  when defined(genHeader):
+    static: discard staticExec("clang-format -i mylib.h")
+
+
 import std/[macros, sets, strutils, hashes, genasts, strformat, os, math, typetraits, enumerate]
 import pkg/micros/introspection
 export sets
@@ -27,6 +64,10 @@ static: # Use module block
 const nimcallStr = when defined(windows): "fastcall" else: ""
 
 type
+  OpaqueSeq*[T] = distinct seq[T] ## Opaque seqs do not emit their entire struct, just the top level one.
+  OpaqueString* = distinct string ## Opaque seqs do not emit their entire struct, just the top level one.
+  OpaqueRef*[T: ref] = distinct T ## Opaque refs do not emit any fields just a `typedef` `void*`.
+
   Passes* = enum
     Inferred
     PassesByRef
@@ -478,6 +519,41 @@ proc toCType*(_: typedesc[bool]; name: string; procArg: bool): string =
 
 proc toCType*(_: typedesc[char]; name: string; procArg: bool): string =
   "char " & name
+
+proc toTypeDefs*[T](_: typedesc[OpaqueRef[T]]): string =
+  result = "struct "
+  result.add ($T).toCName.formatName
+  result.add "{};\n"
+
+proc toCType*[T](_: typedesc[OpaqueRef[T]], name: string, isProcArg: bool): string =
+  result = "struct "
+  result.add ("opaque_" & $T).toCName.formatName()
+  result.add " "
+  result.add name
+
+proc toTypeDefs*(_: typedesc[OpaqueString]): string =
+  addType(int)
+  result = "struct "
+  result.add formatName"opaque_string"
+  result.add "{intptr_t len; void* data;};\n"
+
+proc toCType*(_: typedesc[OpaqueString], name: string, isProcArg: bool): string =
+  result = "struct "
+  result.add formatName"opaque_string"
+  result.add " "
+  result.add name
+
+proc toTypeDefs*[T](_: typedesc[OpaqueSeq[T]]): string =
+  addType(int)
+  result = "struct "
+  result.add ("opaque_seq_" & ($T).toCName).formatName()
+  result.add "{intptr_t len; void* data;};\n"
+
+proc toCType*[T](_: typedesc[OpaqueSeq[T]], name: string, isProcArg: bool): string =
+  result = "struct "
+  result.add ("opaque_seq_" & ($T).toCName).formatName()
+  result.add " "
+  result.add name
 
 macro getEnumNames(t: typed): untyped =
   result = nnkBracket.newTree()
