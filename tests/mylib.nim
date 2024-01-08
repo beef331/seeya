@@ -1,4 +1,5 @@
 import ../seeya
+import ../seeya/utils
 
 when defined(genHeader):
   {.warning[UnsafeDefault]: off.}
@@ -44,19 +45,21 @@ proc free_float_seq(s: seq[float]) {.exporter, expose.} =
   ## This frees `obj`
   `=destroy`(s)
 
-proc new_float_seq(data: openArray[float]): seq[float] {.exporter, expose.} = @data
+proc new_float_seq(data: openArray[float]): seq[float] {.exporter, expose.} =
+  @data
 
-proc float_seq_cmp(a, b: seq[float]): bool {.exporter, expose.} = a == b
+proc float_seq_cmp(a, b: seq[float]): bool {.exporter, expose.} =
+  a == b
 
 proc doStuff[T](obj: T): T {.cdecl.} =
   echo obj
   obj
 
-proc make_opaque_seq_int(data: openArray[int]): OpaqueSeq[int] {.exporter, expose.} =
-  OpaqueSeq @data
+genHelpers(OpaqueSeq[int], nameStr)
 
-proc opaque_seq_int_data(sq: OpaqueSeq[int]): ptr int {.exporter, expose.} =
-  seq[int](sq)[0].addr
+proc make_opaque_seq_int(data: openArray[int]): OpaqueSeq[int] {.exporter, expose.} =
+  # Constructs sequence from a existent array
+  OpaqueSeq @data
 
 let
   do_stuff_int {.exporterVar, expose.} = doStuff[int]
@@ -65,4 +68,5 @@ let
 
 makeHeader("tests/mylib.h")
 when defined(genHeader):
-  static: discard staticExec("clang-format -i tests/gend.h")
+  static:
+    discard staticExec("clang-format -i tests/gend.h")

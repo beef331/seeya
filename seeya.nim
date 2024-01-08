@@ -16,7 +16,6 @@ when not defined(gcOrc) or defined(gcArc):
 ## `procArg` indicates whether it is a proc argument, this is important for things like Nim's implicit pass by reference.
 ## Finally when done you can do `makeHeader("/path/to/header.h")` this will concatenate and make the final header.
 
-
 runnableExamples:
   when defined(genHeader):
     {.warning[UnsafeDefault]: off.}
@@ -29,13 +28,19 @@ runnableExamples:
   {.pragma: exporter, cdecl, dynlib, exportc: nameStr.}
   {.pragma: exporterVar, dynlib, exportc: nameStr.}
 
-  proc print_int_arr(oa: openArray[int]){.exporter, expose.} = echo oa
-  proc add_int(a, b: int): int {.exporter, expose.} = a + b
+  proc print_int_arr(oa: openArray[int]) {.exporter, expose.} =
+    echo oa
+
+  proc add_int(a, b: int): int {.exporter, expose.} =
+    a + b
 
   var my_int {.exporterVar, expose.} = 100
 
-  type MyEnum = enum
-    a, b, c
+  type
+    MyEnum = enum
+      a
+      b
+      c
 
   proc toTypeDefs(_: typedesc[MyEnum]): string =
     headers.incl "<stdio.h>" # Pretend it requires a specific header
@@ -50,10 +55,13 @@ runnableExamples:
 
   makeHeader("mylib.h")
   when defined(genHeader):
-    static: discard staticExec("clang-format -i mylib.h")
+    static:
+      discard staticExec("clang-format -i mylib.h")
 
-
-import std/[macros, sets, strutils, hashes, genasts, strformat, os, math, typetraits, enumerate]
+import
+  std/[
+    macros, sets, strutils, hashes, genasts, strformat, os, math, typetraits, enumerate
+  ]
 import pkg/micros/introspection
 export sets
 
@@ -64,9 +72,12 @@ static: # Use module block
 const nimcallStr = when defined(windows): "fastcall" else: ""
 
 type
-  OpaqueSeq*[T] = distinct seq[T] ## Opaque seqs do not emit their entire struct, just the top level one.
-  OpaqueString* = distinct string ## Opaque seqs do not emit their entire struct, just the top level one.
-  OpaqueRef*[T: ref] = distinct T ## Opaque refs do not emit any fields just a `typedef` `void*`.
+  OpaqueSeq*[T] = distinct seq[T]
+    ## Opaque seqs do not emit their entire struct, just the top level one.
+  OpaqueString* = distinct string
+    ## Opaque seqs do not emit their entire struct, just the top level one.
+  OpaqueRef*[T: ref] = distinct T
+    ## Opaque refs do not emit any fields just a `typedef` `void*`.
 
   Passes* = enum
     Inferred
@@ -129,10 +140,17 @@ macro makeHeader*(location: static string) =
   else:
     discard
 
+proc myGetType(T: typedesc): NimNode =
+  let typ = T.getTypeInst()
+  if typ.len > 0 and typ[1].typeKind == ntyVar:
+    typ[1]
+  else:
+    typ
+
 proc addType*(T: typedesc) =
   mixin toTypeDefs
-  if T.getType.TypedNimNode notin generatedTypes:
-    generatedTypes.incl TypedNimNode T.getType()
+  if T.myGetType() notin generatedTypes:
+    generatedTypes.incl T.myGetType()
     typedefs.add toTypeDefs(T)
 
 var exposeFormatter {.compileTime.} = "$1"
@@ -160,7 +178,7 @@ when defined(genHeader):
     else:
       newEmptyNode()
 
-  proc genProcCall(typ, name: Nimnode; isLast: bool): NimNode =
+  proc genProcCall(typ, name: Nimnode, isLast: bool): NimNode =
     let
       name =
         if name.kind == nnkEmpty:
@@ -179,7 +197,7 @@ when defined(genHeader):
         if not isLast:
           procDefs.add ", "
 
-  proc getComments(node: NimNode; result: var string) =
+  proc getComments(node: NimNode, result: var string) =
     for child in node:
       if child.kind == nnkCommentStmt:
         if result.len == 0:
@@ -224,16 +242,16 @@ when defined(genHeader):
       isExportcd: bool
       isDynlib: bool
     for prag in name.getImpl()[4]:
-      let prag =
-        if prag.kind != nnkIdent:
-          prag[0]
-        else:
-          prag
+      let
+        prag =
+          if prag.kind != nnkIdent:
+            prag[0]
+          else:
+            prag
       isExportcd = isExportcd or prag.eqIdent"exportc"
       isDynLib = isDynLib or prag.eqIdent"dynlib"
-    if not(isDynLib) or not(isExportcd):
+    if not (isDynLib) or not (isExportcd):
       error("Procedure should be marked '{.exportc, dynlib.}'", name)
-
 
   proc exposeProc(name, impl: NimNode): NimNode =
     let comments = name.getComments()
@@ -326,7 +344,7 @@ proc toTypeDefs*(T: typedesc[object]): string =
   for field in default(T).fields:
     typeof(field).addType()
 
-  generatedTypes.incl TypedNimNode T.getType()
+  generatedTypes.incl T.getTypeInst()
 
   result.add "struct "
   result.add formatName(($T).split(":")[0])
@@ -337,7 +355,7 @@ proc toTypeDefs*(T: typedesc[object]): string =
     result.add ";\n"
   result.add "};\n\n"
 
-proc toCType*(T: typedesc[object]; name: string; procArg: bool): string =
+proc toCType*(T: typedesc[object], name: string, procArg: bool): string =
   result.add "struct "
   result.add formatName(($T).split(":")[0])
   result.add " "
@@ -356,7 +374,7 @@ proc toTypeDefs*(T: typedesc[tuple]): string =
   for field in default(T).fields:
     typeof(field).addType()
 
-  generatedTypes.incl TypedNimNode T.getType()
+  generatedTypes.incl T.getTypeInst()
 
   result.add "struct "
   result.add formatName(tupleName(T))
@@ -376,7 +394,7 @@ proc toTypeDefs*(T: typedesc[tuple]): string =
     result.add ";\n"
   result.add "};\n\n"
 
-proc toCType*[T: tuple](t: typedesc[T]; name: string; procArg: bool): string =
+proc toCType*[T: tuple](t: typedesc[T], name: string, procArg: bool): string =
   result.add "struct "
   result.add formatName(tupleName(T))
   result.add " "
@@ -389,29 +407,29 @@ proc toTypeDefs*[T: distinct](_: typedesc[T]): string =
   addType(T.distinctBase)
   toTypeDefs(T.distinctBase)
 
-proc toCType*[T: distinct](_: typedesc[T]; name: string; procArg: bool): string =
+proc toCType*[T: distinct](_: typedesc[T], name: string, procArg: bool): string =
   addType(T.distinctBase)
   toCType(T.distinctBase, name, procArg)
 
 type PtrOrRef[T] = ptr [T] or ref [T]
 
-proc toCType*[T](_: typedesc[PtrOrRef[T]]; name: string; procArg: bool): string =
+proc toCType*[T](_: typedesc[PtrOrRef[T]], name: string, procArg: bool): string =
   addType(T)
   result.add toCType(T, "", false)
   result.add "*"
   result.add name
 
-proc toCType*(_: typedesc[cstring]; name: string; procArg: bool): string =
+proc toCType*(_: typedesc[cstring], name: string, procArg: bool): string =
   "char* " & name
 
-proc toCType*[Idx, T](_: typedesc[array[Idx, T]]; name: string; procArg: bool): string =
+proc toCType*[Idx, T](_: typedesc[array[Idx, T]], name: string, procArg: bool): string =
   addType(T)
   result.add toCType(T, name, false)
   result.add "["
   result.add $(Idx.high.ord - Idx.low.ord)
   result.add "]"
 
-proc toCType*[T](_: typedesc[set[T]]; name: string; procArg: bool): string =
+proc toCType*[T](_: typedesc[set[T]], name: string, procArg: bool): string =
   const size = ceil((T.high.ord - T.low.ord) / 8).int
   when size <= 1:
     toCType(uint8, name, false)
@@ -424,7 +442,7 @@ proc toCType*[T](_: typedesc[set[T]]; name: string; procArg: bool): string =
   else:
     toCType(array[size + 1, uint8], name, false)
 
-proc toCType*[T: SomeInteger](_: typedesc[T]; name: string; procArg: bool): string =
+proc toCType*[T: SomeInteger](_: typedesc[T], name: string, procArg: bool): string =
   headers.incl "<stdint.h>"
   when T is int:
     "intptr_t " & name
@@ -436,10 +454,10 @@ proc toCType*[T: SomeInteger](_: typedesc[T]; name: string; procArg: bool): stri
 macro getRangeBase(t: typed): untyped =
   newCall("typeof", t.getType()[^1][1])
 
-proc toCType*[T: range](_: typedesc[T]; name: string; procArg: bool): string =
+proc toCType*[T: range](_: typedesc[T], name: string, procArg: bool): string =
   toCType(getRangeBase(T), name, false)
 
-proc toCType*[T](_: typedesc[openArray[T]]; name: string; procArg: bool): string =
+proc toCType*[T](_: typedesc[openArray[T]], name: string, procArg: bool): string =
   addType(T)
   result.add toCType(ptr T, name & "_data", false)
   result.add ", "
@@ -471,7 +489,7 @@ proc toTypeDefs*[T](_: typedesc[seq[T]]): string =
   result.add dataName
   result.add " *data;\n};\n\n"
 
-proc toCType*[T](_: typedesc[seq[T]]; name: string; procArg: bool): string =
+proc toCType*[T](_: typedesc[seq[T]], name: string, procArg: bool): string =
   result = "struct " & formatName(("seq_" & $T).toCName())
   result.add " "
   result.add name
@@ -502,22 +520,22 @@ proc toTypeDefs*(_: typedesc[string]): string =
   result.add dataName
   result.add " *data;\n};\n\n"
 
-proc toCType*(_: typedesc[string]; name: string; procArg: bool): string =
+proc toCType*(_: typedesc[string], name: string, procArg: bool): string =
   result = "struct " & formatName("string")
   result.add " "
   result.add name
 
-proc toCType*[T: float or float64](_: typedesc[T]; name: string; procArg: bool): string =
+proc toCType*[T: float or float64](_: typedesc[T], name: string, procArg: bool): string =
   "double " & name
 
-proc toCType*(_: typedesc[float32]; name: string; procArg: bool): string =
+proc toCType*(_: typedesc[float32], name: string, procArg: bool): string =
   "float " & name
 
-proc toCType*(_: typedesc[bool]; name: string; procArg: bool): string =
+proc toCType*(_: typedesc[bool], name: string, procArg: bool): string =
   headers.incl "<stdbool.h>"
   "bool " & name
 
-proc toCType*(_: typedesc[char]; name: string; procArg: bool): string =
+proc toCType*(_: typedesc[char], name: string, procArg: bool): string =
   "char " & name
 
 proc toTypeDefs*[T](_: typedesc[OpaqueRef[T]]): string =
@@ -576,7 +594,7 @@ proc toTypeDefs*[T: enum](_: typedesc[T]): string =
       result.add "\n"
   result.add "};\n\n"
 
-proc toCType*[T: enum](_: typedesc[T]; name: string; procArg: bool): string =
+proc toCType*[T: enum](_: typedesc[T], name: string, procArg: bool): string =
   formatName($T) & " " & name
 
 proc toTypeDefs*(T: typedesc[proc]): string =
@@ -587,7 +605,7 @@ proc toTypeDefs*(T: typedesc[proc]): string =
   for field in tup.fields:
     addType typeof(field)
 
-proc toCType*(T: typedesc[proc]; name: string; procArg: bool): string =
+proc toCType*(T: typedesc[proc], name: string, procArg: bool): string =
   let p = default(T)
   when compiles(p.returnType().toCType("", true)):
     result = p.returnType().toCType("", true)
@@ -660,10 +678,10 @@ when isMainModule:
     discard
 
   proc doThing(
-      oa: openArray[int];
-      otherOa: openArray[cstring];
-      typ: MyOtherType;
-      a, b: seq[float32];
+      oa: openArray[int],
+      otherOa: openArray[cstring],
+      typ: MyOtherType,
+      a, b: seq[float32],
   ): cstring {.exporter, expose.} =
     discard
 
@@ -680,4 +698,5 @@ when isMainModule:
   var inheritance {.exporterVar, expose.} = Child(x: 300)
   makeHeader("tests/gend.h")
   when defined(genHeader):
-    static: discard staticExec("clang-format -i tests/gend.h")
+    static:
+      discard staticExec("clang-format -i tests/gend.h")

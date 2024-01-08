@@ -52,5 +52,19 @@ void mylib_free_my_obj(struct mylib_MyObj *obj );
 void mylib_free_float_seq(struct mylib_seq_float s );
 struct mylib_seq_float   mylib_new_float_seq(double *data_data, intptr_t data_len );
 bool   mylib_float_seq_cmp(struct mylib_seq_float a , struct mylib_seq_float b );
+
+// Destroys the sequence should only be called once
+void mylib_opaque_seq_int_destroy(struct mylib_opaque_seq_int the_seq );
+
+// Indexes the sequence
+intptr_t   mylib_opaque_seq_int_index(struct mylib_opaque_seq_int the_seq , intptr_t ind );
+
+// Indexes the sequence returning a mutable reference
+intptr_t *  mylib_opaque_seq_int_index_mutable(struct mylib_opaque_seq_int *the_seq , intptr_t ind );
+
+// Assigns the value at an index
+void mylib_opaque_seq_int_assign_index(struct mylib_opaque_seq_int *the_seq , intptr_t ind , intptr_t val );
+
+// Compares two sequences
+bool   mylib_opaque_seq_int_cmp(struct mylib_opaque_seq_int a , struct mylib_opaque_seq_int b );
 struct mylib_opaque_seq_int   mylib_make_opaque_seq_int(intptr_t *data_data, intptr_t data_len );
-intptr_t *  mylib_opaque_seq_int_data(struct mylib_opaque_seq_int sq );

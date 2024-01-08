@@ -43,6 +43,6 @@ int main()
         5,
         6 };
     struct mylib_opaque_seq_int int_seq = mylib_make_opaque_seq_int(ints, 6);
-    assert(memcmp(mylib_opaque_seq_int_data(int_seq), vals, int_seq.len * sizeof(intptr_t)));
+    assert(memcmp(mylib_opaque_seq_int_index_mutable(&int_seq, 0), vals, int_seq.len * sizeof(intptr_t)));
     return 0;
 }
