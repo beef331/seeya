@@ -76,7 +76,7 @@ type
     ## Opaque seqs do not emit their entire struct, just the top level one.
   OpaqueString* = distinct string
     ## Opaque seqs do not emit their entire struct, just the top level one.
-  OpaqueRef*[T: ref] = distinct T
+  OpaqueRef*[T: ref] {.borrow: `.`.} = distinct T
     ## Opaque refs do not emit any fields just a `typedef` `void*`.
 
   Passes* = enum
@@ -167,7 +167,18 @@ when defined(genHeader):
     hash(node.repr) # This is bad bad bad bad bad
 
   proc `==`(a, b: TypedNimNode): bool =
-    NimNode(a).sameType(NimNode(b))
+    let
+      a =
+        if a.typeKind == ntyTypeDesc:
+          a[1]
+        else:
+          a
+      b =
+        if b.typeKind == ntyTypeDesc:
+          b[1]
+        else:
+          b
+    macros.`==`(a, b) #NimNode(a).sameType(NimNode(b))
 
   proc genTypeDefCall(typ: NimNode): NimNode =
     if typ.TypedNimNode notin generatedTypes:
@@ -340,7 +351,7 @@ proc toCName*(s: string): string =
   s.multiReplace({"[": "_", "]": "_"})
 
 proc toTypeDefs*(T: typedesc[object]): string =
-  mixin toCType
+  mixin toCType, toTypeDefs
   for field in default(T).fields:
     typeof(field).addType()
 
@@ -356,6 +367,7 @@ proc toTypeDefs*(T: typedesc[object]): string =
   result.add "};\n\n"
 
 proc toCType*(T: typedesc[object], name: string, procArg: bool): string =
+  mixin toCtype
   result.add "struct "
   result.add formatName(($T).split(":")[0])
   result.add " "
@@ -413,6 +425,10 @@ proc toCType*[T: distinct](_: typedesc[T], name: string, procArg: bool): string 
 
 type PtrOrRef[T] = ptr [T] or ref [T]
 
+proc toCType[T](_: typedesc[UncheckedArray[T]], name: string, procArg: bool): string =
+  addType(T)
+  result.add toCtype(T, " ", false)
+
 proc toCType*[T](_: typedesc[PtrOrRef[T]], name: string, procArg: bool): string =
   addType(T)
   result.add toCType(T, "", false)
@@ -444,9 +460,9 @@ proc toCType*[T](_: typedesc[set[T]], name: string, procArg: bool): string =
 
 proc toCType*[T: SomeInteger](_: typedesc[T], name: string, procArg: bool): string =
   headers.incl "<stdint.h>"
-  when T is int:
+  when T is (int or BiggestInt):
     "intptr_t " & name
-  elif T is uint:
+  elif T is (uint or BiggestUInt):
     "uintptr_t " & name
   else:
     $T & "_t " & name
@@ -539,14 +555,17 @@ proc toCType*(_: typedesc[char], name: string, procArg: bool): string =
   "char " & name
 
 proc toTypeDefs*[T](_: typedesc[OpaqueRef[T]]): string =
-  result = "struct "
-  result.add ($T).toCName.formatName
-  result.add "{};\n"
+  when T.getType notin generatedTypes:
+    result = "struct "
+    result.add ("opaque_" & $T).toCName.formatName
+    result.add "{};\n"
+    generatedTypes.incl T.getType()
+
 
 proc toCType*[T](_: typedesc[OpaqueRef[T]], name: string, isProcArg: bool): string =
   result = "struct "
   result.add ("opaque_" & $T).toCName.formatName()
-  result.add " "
+  result.add "* "
   result.add name
 
 proc toTypeDefs*(_: typedesc[OpaqueString]): string =
@@ -595,15 +614,16 @@ proc toTypeDefs*[T: enum](_: typedesc[T]): string =
   result.add "};\n\n"
 
 proc toCType*[T: enum](_: typedesc[T], name: string, procArg: bool): string =
-  formatName($T) & " " & name
+  "enum " & formatName($T) & " " & name
 
 proc toTypeDefs*(T: typedesc[proc]): string =
   let p = default(T)
   when compiles(addType p.returnType()):
     addType p.returnType()
-  let tup = default(p.paramsAsTuple())
-  for field in tup.fields:
-    addType typeof(field)
+  when tupleLen(p.paramsAsTuple()) > 0:
+    let tup = default(p.paramsAsTuple())
+    for field in tup.fields:
+      addType typeof(field)
 
 proc toCType*(T: typedesc[proc], name: string, procArg: bool): string =
   let p = default(T)
@@ -614,11 +634,12 @@ proc toCType*(T: typedesc[proc], name: string, procArg: bool): string =
   result.add "(*"
   result.add name
   result.add ")("
-  let tup = default(p.paramsAsTuple())
-  for i, field in enumerate tup.fields:
-    result.add field.typeof.toCtype("", true)
-    if i < tup.tupleLen - 1:
-      result.add ", "
+  when tupleLen(p.paramsAsTuple()) > 0:
+    let tup = default(p.paramsAsTuple())
+    for i, field in enumerate tup.fields:
+      result.add field.typeof.toCtype("", true)
+      if i < tup.tupleLen - 1:
+        result.add ", "
   result.add ")"
 
 when isMainModule:
