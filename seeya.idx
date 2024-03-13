@@ -13,39 +13,39 @@ nim	makeHeader	seeya.html#makeHeader.m,staticstring	macro makeHeader(location: s
 nim	addType	seeya.html#addType,typedesc	proc addType(T: typedesc)		150
 nim	formatName	seeya.html#formatName,string	proc formatName(s: string): string		157
 nim	setFormatter	seeya.html#setFormatter,staticstring	proc setFormatter(formatter: static string)		160
-nim	expose	seeya.html#expose.m,untyped	macro expose(t: untyped): untyped		334
-nim	toCName	seeya.html#toCName,string	proc toCName(s: string): string		337
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[]	proc toTypeDefs(T: typedesc[object]): string		342
-nim	toCType	seeya.html#toCType,typedesc[],string,bool	proc toCType(T: typedesc[object]; name: string; procArg: bool): string		358
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[]_2	proc toTypeDefs(T: typedesc[tuple]): string		372
-nim	toCType	seeya.html#toCType,typedesc[T],string,bool	proc toCType[T: tuple](t: typedesc[T]; name: string; procArg: bool): string		397
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[T]	proc toTypeDefs[T: not (object or distinct or tuple or enum)](__536871153: typedesc[T]): string		403
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[T]_2	proc toTypeDefs[T: distinct](__536871158: typedesc[T]): string		406
-nim	toCType	seeya.html#toCType,typedesc[T],string,bool_2	proc toCType[T: distinct](__536871163: typedesc[T]; name: string; procArg: bool): string		410
-nim	toCType	seeya.html#toCType,typedesc[PtrOrRef[T]],string,bool	proc toCType[T](__536871172: typedesc[PtrOrRef[T]]; name: string; procArg: bool): string		416
-nim	toCType	seeya.html#toCType,typedesc[cstring],string,bool	proc toCType(__536871178: typedesc[cstring]; name: string; procArg: bool): string		422
-nim	toCType	seeya.html#toCType,typedesc[array[Idx,T]],string,bool	proc toCType[Idx, T](__536871186: typedesc[array[Idx, T]]; name: string;\n                procArg: bool): string		425
-nim	toCType	seeya.html#toCType,typedesc[set[T]],string,bool	proc toCType[T](__536871193: typedesc[set[T]]; name: string; procArg: bool): string		432
-nim	toCType	seeya.html#toCType,typedesc[T],string,bool_3	proc toCType[T: SomeInteger](__536871201: typedesc[T]; name: string; procArg: bool): string		445
-nim	toCType	seeya.html#toCType,typedesc[T],string,bool_4	proc toCType[T: range](__536871213: typedesc[T]; name: string; procArg: bool): string		457
-nim	toCType	seeya.html#toCType,typedesc[openArray[T]],string,bool	proc toCType[T](__536871220: typedesc[openArray[T]]; name: string; procArg: bool): string		460
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[seq[T]]	proc toTypeDefs[T](__536871227: typedesc[seq[T]]): string		466
-nim	toCType	seeya.html#toCType,typedesc[seq[T]],string,bool	proc toCType[T](__536871234: typedesc[seq[T]]; name: string; procArg: bool): string		492
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[string]	proc toTypeDefs(__536871240: typedesc[string]): string		497
-nim	toCType	seeya.html#toCType,typedesc[string],string,bool	proc toCType(__536871246: typedesc[string]; name: string; procArg: bool): string		523
-nim	toCType	seeya.html#toCType,typedesc[T],string,bool_5	proc toCType[T: float or float64](__536871253: typedesc[T]; name: string;\n                             procArg: bool): string		528
-nim	toCType	seeya.html#toCType,typedesc[float32],string,bool	proc toCType(__536871259: typedesc[float32]; name: string; procArg: bool): string		531
-nim	toCType	seeya.html#toCType,typedesc[bool],string,bool	proc toCType(__536871265: typedesc[bool]; name: string; procArg: bool): string		534
-nim	toCType	seeya.html#toCType,typedesc[char],string,bool	proc toCType(__536871271: typedesc[char]; name: string; procArg: bool): string		538
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[OpaqueRef[T]]	proc toTypeDefs[T](__536871278: typedesc[OpaqueRef[T]]): string		541
-nim	toCType	seeya.html#toCType,typedesc[OpaqueRef[T]],string,bool	proc toCType[T](__536871283: typedesc[OpaqueRef[T]]; name: string; isProcArg: bool): string		546
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[OpaqueString]	proc toTypeDefs(__536871289: typedesc[OpaqueString]): string		552
-nim	toCType	seeya.html#toCType,typedesc[OpaqueString],string,bool	proc toCType(__536871293: typedesc[OpaqueString]; name: string; isProcArg: bool): string		558
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[OpaqueSeq[T]]	proc toTypeDefs[T](__536871300: typedesc[OpaqueSeq[T]]): string		564
-nim	toCType	seeya.html#toCType,typedesc[OpaqueSeq[T]],string,bool	proc toCType[T](__536871305: typedesc[OpaqueSeq[T]]; name: string; isProcArg: bool): string		570
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[T]_3	proc toTypeDefs[T: enum](__536871335: typedesc[T]): string		581
-nim	toCType	seeya.html#toCType,typedesc[T],string,bool_6	proc toCType[T: enum](__536871344: typedesc[T]; name: string; procArg: bool): string		597
-nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[proc]	proc toTypeDefs(T: typedesc[proc]): string		600
-nim	toCType	seeya.html#toCType,typedesc[proc],string,bool	proc toCType(T: typedesc[proc]; name: string; procArg: bool): string		608
-nimgrp	totypedefs	seeya.html#toTypeDefs-procs-all	proc		342
-nimgrp	toctype	seeya.html#toCType-procs-all	proc		358
+nim	expose	seeya.html#expose.m,untyped	macro expose(t: untyped): untyped		345
+nim	toCName	seeya.html#toCName,string	proc toCName(s: string): string		348
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[]	proc toTypeDefs(T: typedesc[object]): string		353
+nim	toCType	seeya.html#toCType,typedesc[],string,bool	proc toCType(T: typedesc[object]; name: string; procArg: bool): string		369
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[]_2	proc toTypeDefs(T: typedesc[tuple]): string		384
+nim	toCType	seeya.html#toCType,typedesc[T],string,bool	proc toCType[T: tuple](t: typedesc[T]; name: string; procArg: bool): string		409
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[T]	proc toTypeDefs[T: not (object or distinct or tuple or enum)](__536871153: typedesc[T]): string		415
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[T]_2	proc toTypeDefs[T: distinct](__536871158: typedesc[T]): string		418
+nim	toCType	seeya.html#toCType,typedesc[T],string,bool_2	proc toCType[T: distinct](__536871163: typedesc[T]; name: string; procArg: bool): string		422
+nim	toCType	seeya.html#toCType,typedesc[PtrOrRef[T]],string,bool	proc toCType[T](__536871179: typedesc[PtrOrRef[T]]; name: string; procArg: bool): string		432
+nim	toCType	seeya.html#toCType,typedesc[cstring],string,bool	proc toCType(__536871185: typedesc[cstring]; name: string; procArg: bool): string		438
+nim	toCType	seeya.html#toCType,typedesc[array[Idx,T]],string,bool	proc toCType[Idx, T](__536871193: typedesc[array[Idx, T]]; name: string;\n                procArg: bool): string		441
+nim	toCType	seeya.html#toCType,typedesc[set[T]],string,bool	proc toCType[T](__536871200: typedesc[set[T]]; name: string; procArg: bool): string		448
+nim	toCType	seeya.html#toCType,typedesc[T],string,bool_3	proc toCType[T: SomeInteger](__536871208: typedesc[T]; name: string; procArg: bool): string		461
+nim	toCType	seeya.html#toCType,typedesc[T],string,bool_4	proc toCType[T: range](__536871220: typedesc[T]; name: string; procArg: bool): string		473
+nim	toCType	seeya.html#toCType,typedesc[openArray[T]],string,bool	proc toCType[T](__536871227: typedesc[openArray[T]]; name: string; procArg: bool): string		476
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[seq[T]]	proc toTypeDefs[T](__536871234: typedesc[seq[T]]): string		482
+nim	toCType	seeya.html#toCType,typedesc[seq[T]],string,bool	proc toCType[T](__536871241: typedesc[seq[T]]; name: string; procArg: bool): string		508
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[string]	proc toTypeDefs(__536871247: typedesc[string]): string		513
+nim	toCType	seeya.html#toCType,typedesc[string],string,bool	proc toCType(__536871253: typedesc[string]; name: string; procArg: bool): string		539
+nim	toCType	seeya.html#toCType,typedesc[T],string,bool_5	proc toCType[T: float or float64](__536871260: typedesc[T]; name: string;\n                             procArg: bool): string		544
+nim	toCType	seeya.html#toCType,typedesc[float32],string,bool	proc toCType(__536871266: typedesc[float32]; name: string; procArg: bool): string		547
+nim	toCType	seeya.html#toCType,typedesc[bool],string,bool	proc toCType(__536871272: typedesc[bool]; name: string; procArg: bool): string		550
+nim	toCType	seeya.html#toCType,typedesc[char],string,bool	proc toCType(__536871278: typedesc[char]; name: string; procArg: bool): string		554
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[OpaqueRef[T]]	proc toTypeDefs[T](__536871285: typedesc[OpaqueRef[T]]): string		557
+nim	toCType	seeya.html#toCType,typedesc[OpaqueRef[T]],string,bool	proc toCType[T](__536871290: typedesc[OpaqueRef[T]]; name: string; isProcArg: bool): string		565
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[OpaqueString]	proc toTypeDefs(__536871296: typedesc[OpaqueString]): string		571
+nim	toCType	seeya.html#toCType,typedesc[OpaqueString],string,bool	proc toCType(__536871300: typedesc[OpaqueString]; name: string; isProcArg: bool): string		577
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[OpaqueSeq[T]]	proc toTypeDefs[T](__536871307: typedesc[OpaqueSeq[T]]): string		583
+nim	toCType	seeya.html#toCType,typedesc[OpaqueSeq[T]],string,bool	proc toCType[T](__536871312: typedesc[OpaqueSeq[T]]; name: string; isProcArg: bool): string		589
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[T]_3	proc toTypeDefs[T: enum](__536871342: typedesc[T]): string		600
+nim	toCType	seeya.html#toCType,typedesc[T],string,bool_6	proc toCType[T: enum](__536871351: typedesc[T]; name: string; procArg: bool): string		616
+nim	toTypeDefs	seeya.html#toTypeDefs,typedesc[proc]	proc toTypeDefs(T: typedesc[proc]): string		619
+nim	toCType	seeya.html#toCType,typedesc[proc],string,bool	proc toCType(T: typedesc[proc]; name: string; procArg: bool): string		628
+nimgrp	totypedefs	seeya.html#toTypeDefs-procs-all	proc		353
+nimgrp	toctype	seeya.html#toCType-procs-all	proc		369
