@@ -76,7 +76,7 @@ type
     ## Opaque seqs do not emit their entire struct, just the top level one.
   OpaqueString* = distinct string
     ## Opaque seqs do not emit their entire struct, just the top level one.
-  OpaqueRef*[T: ref] {.borrow: `.`.} = distinct T
+  OpaqueRef*[T: ref or ptr] {.borrow: `.`.} = distinct T
     ## Opaque refs do not emit any fields just a `typedef` `void*`.
 
   Passes* = enum
@@ -109,11 +109,17 @@ proc passType(typImpl: NimNode): Passes =
         return
 
 macro passConvention(obj: object): untyped =
-  newLit passType obj.getTypeImpl()
+  let
+    typ =
+      if obj.getTypeInst().kind == nnkBracketExpr:
+        obj[0]
+      else:
+        obj.getTypeInst()
+  newLit passType typ.getImpl()
 
 proc passesByRef*(T: typedesc[object]): bool =
   const conv = passConvention(default(T))
-  conv == PassesByRef or (conv == Inferred and sizeof(default(T)) > sizeof(float) * 3)
+  conv == PassesByRef or (conv == Inferred and sizeof(default(T)) >= sizeof(float) * 3)
 
 type TypedNimNode* = NimNode
 
@@ -189,7 +195,7 @@ when defined(genHeader):
     else:
       newEmptyNode()
 
-  proc genProcCall(typ, name: Nimnode, isLast: bool): NimNode =
+  proc genProcCall(typ, name: Nimnode, isLast: bool, isRetVal: bool = false): NimNode =
     let
       name =
         if name.kind == nnkEmpty:
@@ -201,9 +207,9 @@ when defined(genHeader):
           nnkPtrTy.newTree typ[0]
         else:
           typ
-    genAst(typ, isLast, name):
+    genAst(typ, isLast, name, isRetVal):
       static:
-        procDefs.add typ.toCType(name, true)
+        procDefs.add typ.toCType(name, true and not(isRetVal))
         procDefs.add " "
         if not isLast:
           procDefs.add ", "
@@ -276,7 +282,7 @@ when defined(genHeader):
       if i == 0:
         if x.kind != nnkEmpty:
           result.add genTypeDefCall(x)
-          result.add genProcCall(x, newEmptyNode(), true)
+          result.add genProcCall(x, newEmptyNode(), true, true)
         else:
           result.add:
             genast:
@@ -558,7 +564,7 @@ proc toTypeDefs*[T](_: typedesc[OpaqueRef[T]]): string =
   when T.getType notin generatedTypes:
     result = "struct "
     result.add ("opaque_" & $T).toCName.formatName
-    result.add "{};\n"
+    result.add ";\n\n"
     generatedTypes.incl T.getType()
 
 
