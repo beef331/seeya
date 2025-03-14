@@ -121,14 +121,12 @@ proc passesByRef*(T: typedesc[object]): bool =
   const conv = passConvention(default(T))
   conv == PassesByRef or (conv == Inferred and sizeof(default(T)) >= sizeof(float) * 3)
 
-type TypedNimNode* = NimNode
-
 var
   headers* {.compileTime, used.}: HashSet[string]
   typeDefs {.compileTime, used.} = ""
   procDefs {.compileTime, used.} = ""
   variables {.compileTime, used.} = ""
-  generatedTypes {.compileTime, used.}: HashSet[TypedNimNode]
+  generatedTypes {.compileTime, used.}: HashSet[string]
 
 macro makeHeader*(location: static string) =
   when defined(genHeader):
@@ -148,15 +146,16 @@ macro makeHeader*(location: static string) =
 
 proc myGetType(T: typedesc): NimNode =
   let typ = T.getTypeInst()
-  if typ.len > 0 and typ[1].typeKind == ntyVar:
+  if typ.len > 1 and typ[1].typeKind == ntyVar:
     typ[1]
   else:
     typ
 
 proc addType*(T: typedesc) =
   mixin toTypeDefs
-  if T.myGetType() notin generatedTypes:
-    generatedTypes.incl T.myGetType()
+
+  if T.myGetType().repr notin generatedTypes:
+    generatedTypes.incl T.myGetType().repr
     typedefs.add toTypeDefs(T)
 
 var exposeFormatter {.compileTime.} = "$1"
@@ -169,26 +168,8 @@ proc setFormatter*(formatter: static string) {.compileTime.} =
   exposeFormatter = formatter
 
 when defined(genHeader):
-  proc hash(node: TypedNimNode): Hash =
-    hash(node.repr) # This is bad bad bad bad bad
-
-  proc `==`(a, b: TypedNimNode): bool =
-    let
-      a =
-        if a.typeKind == ntyTypeDesc:
-          a[1]
-        else:
-          a
-      b =
-        if b.typeKind == ntyTypeDesc:
-          b[1]
-        else:
-          b
-    macros.`==`(a, b) #NimNode(a).sameType(NimNode(b))
-
   proc genTypeDefCall(typ: NimNode): NimNode =
-    if typ.TypedNimNode notin generatedTypes:
-      generatedTypes.incl TypedNimNode typ
+    if typ.repr notin generatedTypes:
       genAst(typ):
         static:
           addType(typeof typ)
@@ -354,17 +335,24 @@ else:
 proc toCName*(s: string): string =
   ## Converts a Nim type to a "valid" C identifier
   ## Uses simple replace dumb as hell
-  s.multiReplace({"[": "_", "]": "_"})
+  result = s.multiReplace({
+      "[": "_",
+      ", ": "_",
+      "]": "_",
+      ".": "_"}
+    ).split(":")[0]
+  result = result.strip(false, true, {'_'})
+
 
 proc toTypeDefs*(T: typedesc[object]): string =
   mixin toCType, toTypeDefs
   for field in default(T).fields:
     typeof(field).addType()
 
-  generatedTypes.incl T.getTypeInst()
+  generatedTypes.incl T.getTypeInst().repr
 
   result.add "struct "
-  result.add formatName(($T).split(":")[0])
+  result.add formatName(($T).toCName)
   result.add " {\n"
   for name, field in default(T).fieldPairs:
     result.add "    "
@@ -375,7 +363,7 @@ proc toTypeDefs*(T: typedesc[object]): string =
 proc toCType*(T: typedesc[object], name: string, procArg: bool): string =
   mixin toCtype
   result.add "struct "
-  result.add formatName(($T).split(":")[0])
+  result.add formatName(($T).toCName())
   result.add " "
   if T.passesByRef() and procArg:
     result.add "*"
@@ -392,7 +380,7 @@ proc toTypeDefs*(T: typedesc[tuple]): string =
   for field in default(T).fields:
     typeof(field).addType()
 
-  generatedTypes.incl T.getTypeInst()
+  generatedTypes.incl T.getTypeInst().repr
 
   result.add "struct "
   result.add formatName(tupleName(T))
@@ -470,6 +458,8 @@ proc toCType*[T: SomeInteger](_: typedesc[T], name: string, procArg: bool): stri
     "intptr_t " & name
   elif T is (uint or BiggestUInt):
     "uintptr_t " & name
+  elif T is byte:
+    "uint8_t " & name
   else:
     $T & "_t " & name
 
@@ -620,6 +610,7 @@ proc toTypeDefs*[T: enum](_: typedesc[T]): string =
   result.add "};\n\n"
 
 proc toCType*[T: enum](_: typedesc[T], name: string, procArg: bool): string =
+  addType(T)
   "enum " & formatName($T) & " " & name
 
 proc toTypeDefs*(T: typedesc[proc]): string =
